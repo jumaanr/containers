@@ -1,0 +1,9 @@
+These are steps required to build the docker image
+
+apt-get update
+apt-get install -y python
+apt-get install python-pip
+pip install flask
+Create and copy application code to /opt/app.py
+
+FLASK_APP=app.py flask run --host=0.0.0.0

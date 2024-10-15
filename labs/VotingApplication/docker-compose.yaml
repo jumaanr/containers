@@ -1,0 +1,46 @@
+version: '3'
+services:
+  redis:
+    image: redis
+    networks:
+      - back-end
+  db:
+    image: postgres:9.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    networks:
+      - back-end
+
+  vote:
+  #run a docker build instead of trying to pull the image from docker registry
+  #in this specified location of the directory, contains application code and dockerfile with instructions to build the docker image
+    build: ./vote
+    ports:
+      - 5000:80
+    depends_on:
+      - redis
+    networks:
+      - front-end
+      - back-end
+
+  result:
+    build: ./result
+    ports:
+      - 5001:80
+    networks:
+      - front-end
+      - back-end
+
+  worker:
+    build: ./worker
+    networks:
+      - back-end
+
+#definiing two networks,  userfacing applications voting-app and result app is with front-end network
+# all the components internal connected to back-end network
+
+networks:
+  front-end:
+  back-end:
+
