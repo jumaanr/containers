@@ -1,0 +1,94 @@
+az login --use-device-code
+#Subscription
+az account show
+az account list --all --output table
+
+#Parameters
+SUBSCRIPTION="09688c0b-8d07-41e6-ad43-b4a1b7329fbc"
+LOCATION="eastus"
+RESOURCEGROUP="linuxlab"
+VNET_NAME="vnet-$RESOURCEGROUP"
+SUBNET_NAME="subnet-$RESOURCEGROUP"
+NSG_NAME="nsg-$RESOURCEGROUP"
+PIP_NAME="pip-$RESOURCEGROUP"
+
+
+#Set Subscription
+az account set --subscription $SUBSCRIPTION
+
+#Resource Group
+
+az group create --name $RESOURCEGROUP --location $LOCATION
+#az group delete --name $RESOURCEGROUP
+az group list --output table
+
+#Create VNET and SUBNET
+
+az network vnet create --name $VNET_NAME --resource-group $RESOURCEGROUP --location $LOCATION --subnet-name $SUBNET_NAME
+az network vnet list --output table
+
+# Create NSG and Update Subnets
+az network nsg create --resource-group $RESOURCEGROUP --name $NSG_NAME
+
+az network nsg rule create --resource-group $RESOURCEGROUP --nsg-name $NSG_NAME --name AllowHTTP --protocol tcp --priority 1000 --destination-port-range 80 --access allow --direction inbound
+az network nsg rule create --resource-group $RESOURCEGROUP --nsg-name $NSG_NAME --name AllowHTTPS --protocol tcp --priority 1010 --destination-port-range 443 --access allow --direction inbound
+az network nsg rule create --resource-group $RESOURCEGROUP --nsg-name $NSG_NAME --name AllowSSH --protocol tcp --priority 1020 --destination-port-range 22 --access allow --direction inbound
+
+az network vnet subnet update --resource-group $RESOURCEGROUP --vnet-name $VNET_NAME --name subnet-$RESOURCEGROUP --network-security-group $NSG_NAME
+
+#Create a public IP address
+az network public-ip create --resource-group $RESOURCEGROUP --name $PIP_NAME --sku Basic --allocation-method Static
+az network public-ip show --resource-group $RESOURCEGROUP --name $PIP_NAME --output table
+
+
+#VM Creation - Parameters
+VM_NAME="vm-$RESOURCEGROUP-02"
+VM_ADMIN="kubeadmin"
+VM_SECRET="K8ClusterR0l"
+VM_SKU="Standard_D2s_v4"
+VM_IMAGE="Ubuntu2204"
+
+
+#VM Template
+az vm create \
+  --name $VM_NAME \
+  --resource-group $RESOURCEGROUP \
+  --location $LOCATION \
+  --vnet-name $VNET_NAME \
+  --subnet $SUBNET_NAME \
+  --nsg $NSG_NAME \
+  --image $VM_IMAGE \
+  --size $VM_SKU \
+  --priority Spot \
+  --eviction-policy Deallocate \
+  --max-price -1 \
+  --admin-username $VM_ADMIN \
+  --admin-password $VM_SECRET \
+  --authentication-type password \
+  --no-wait
+
+
+#VM Template
+az vm create \
+  --name $VM_NAME \
+  --resource-group $RESOURCEGROUP \
+  --location $LOCATION \
+  --vnet-name $VNET_NAME \
+  --subnet $SUBNET_NAME \
+  --nsg $NSG_NAME \
+  --public-ip-address $PIP_NAME \
+  --image $VM_IMAGE \
+  --size $VM_SKU \
+  --priority Spot \
+  --eviction-policy Deallocate \
+  --max-price -1 \
+  --admin-username $VM_ADMIN \
+  --admin-password $VM_SECRET \
+  --authentication-type password \
+  --no-wait
+
+
+
+az vm list --output table
+az vm nic list --vm-name $VM_NAME --resource-group $RESOURCE_GROUP --output table
+az vm list-sizes --location $LOCATION --output table
