@@ -37,8 +37,12 @@ cat /etc/containerd/config.toml | grep -i SystemdCgroup -B 50
 systemctl status containerd
 sudo systemctl restart containerd
 
-#check required ports are open
+#check required ports are open (Not necessary in Cloud Deployment)
 nc 127.0.0.1 6443 -v
+sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw allow 8080
 sudo ufw allow 6443/tcp
 sudo ufw allow 2379/tcp
 sudo ufw allow 2380/tcp
@@ -47,6 +51,7 @@ sudo ufw allow 10259/tcp
 sudo ufw allow 10257/tcp
 sudo ufw allow 10256/tcp
 sudo ufw allow 30000:32767/tcp
+sudo ufw enable
 sudo ufw reload
 sudo ufw status verbose
 
@@ -70,40 +75,13 @@ sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-sudo systemctl enable --now kubelet
-
 sudo systemctl enable --now kubelet #Enable before running kubeadm
-
 kubeadm version
 
 #5) Initialize control-plane node , ip address of master node, subnet all the pods pulling ip address from
-kubeadm init --apiserver-advertise-address 192.168.56.21 --pod-network-cidr "10.244.0.0/16" --upload-certs
+sudo kubeadm init --apiserver-advertise-address 192.168.56.21 --pod-network-cidr "10.244.0.0/16" --upload-certs
 
 #----------------
 Your Kubernetes control-plane has initialized successfully!
 
-To start using your cluster, you need to run the following as a regular user:
 
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-Alternatively, if you are the root user, you can run:
-
-  export KUBECONFIG=/etc/kubernetes/admin.conf
-
-You should now deploy a pod network to the cluster.
-Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
-  https://kubernetes.io/docs/concepts/cluster-administration/addons/
-
-Then you can join any number of worker nodes by running the following on each as root:
-
-kubeadm join 192.168.56.21:6443 --token harcj5.mu0bgotpc2h3qkwo \
-	--discovery-token-ca-cert-hash sha256:ff95bd13fc18d337197193ef2a1032403c8056e16a63061f04e9d7cae7f865cf 
-  #
-
-  #------------- Deploy Flannel ---------------#
- wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
- kubectl apply -f kube-flannel.yml
- sudo ufw allow 8472/udp 
- sudo ufw reload
