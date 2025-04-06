@@ -169,6 +169,12 @@ kubectl get pods -n kube-system
 kubectl get daemonset -n kube-system
 
 #?--- PODS ---#
+
+kubectl run nginx --image nginx # create a pod
+kubectl get pods # get list of pods
+kubectl describe pod nginx # get detailed information about the pod
+kubectl delete pod nginx # delete the pod
+
 #kubernetes any resource should have following basic template : https://kubernetes.io/docs/concepts/workloads/pods/
 apiVersion: v1
 kind: Pod
